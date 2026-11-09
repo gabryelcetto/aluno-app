@@ -1,0 +1,46 @@
+# Atividade: Docker na Prática
+
+## Parte Teórica
+
+### 1. Qual é a diferença entre imagem e contêiner?
+
+A **imagem** é um pacote fechado e somente leitura, que contém tudo que o aplicativo precisa para rodar (sistema base, Node.js, código e configurações). Ela funciona como um molde e é criada com o `docker build`.
+
+O **contêiner** é a imagem **em execução**, criada com o `docker run`. A partir de uma mesma imagem é possível criar vários contêineres independentes, cada um com seu nome e suas portas.
+
+### 2. Qual é a diferença entre RUN e CMD?
+
+O `RUN` é executado durante o **build** da imagem e serve para preparar o ambiente, por exemplo instalando dependências. O resultado fica gravado na imagem.
+
+O `CMD` é executado quando o **contêiner inicia** e define o comando que sobe a aplicação (neste projeto, `node app.js`). Só vale um `CMD` por Dockerfile; se houver mais de um, apenas o último é usado.
+
+### 3. Qual é a diferença entre CMD e ENTRYPOINT?
+
+Ambos definem o que executa quando o contêiner inicia. O `CMD` é um comando **padrão e substituível**: o que for escrito no final do `docker run` o substitui. Por exemplo, `docker run aluno-app:1.0 node -v` troca o `node app.js` pelo `node -v`.
+
+O `ENTRYPOINT` define um executável **fixo**, e o que for escrito no `docker run` é **adicionado como argumento** a ele, em vez de substituí-lo. É comum usar os dois juntos: o `ENTRYPOINT` com o programa e o `CMD` com os argumentos padrão.
+
+### 4. EXPOSE publica uma porta?
+
+**Não.** O `EXPOSE` apenas **documenta** qual porta a aplicação usa dentro do contêiner, sem abrir acesso a ela. Para acessar o app a partir da máquina hospedeira é necessário publicar a porta com `-p` no `docker run` (por exemplo, `-p 3000:3000`) ou com `-P`, que publica automaticamente as portas declaradas no `EXPOSE`.
+
+### 5. Por que usar tags em vez de depender de latest?
+
+A tag `latest` aponta para a versão mais recente **no momento em que a imagem é baixada**, então o resultado muda com o tempo. Isso quebra a **reprodutibilidade**: o mesmo Dockerfile pode gerar imagens diferentes em dias diferentes, e uma atualização inesperada pode introduzir erros.
+
+Com uma tag específica (como `node:20-alpine`, `aluno-app:1.0` e `aluno-app:2.0`) sabemos exatamente qual versão está em uso, o build é previsível e é fácil voltar para uma versão anterior.
+
+### 6. Por que não devemos colocar senhas no Dockerfile?
+
+Tudo que está no Dockerfile fica **gravado nas camadas da imagem**, e a imagem é feita para ser compartilhada e armazenada em registries. Qualquer pessoa com acesso a ela consegue extrair a senha, por exemplo inspecionando o histórico da imagem, mesmo que o arquivo seja apagado em uma etapa seguinte.
+
+O correto é fornecer dados sensíveis **somente em tempo de execução**, com variáveis de ambiente (`-e`), arquivos `.env` fora da imagem (e listados no `.dockerignore`) ou mecanismos de *secrets*.
+
+### 7. Qual a vantagem de usar um Registry?
+
+O Registry (como o Docker Hub) é um repositório central de imagens. As vantagens são:
+
+- **Compartilhamento:** qualquer pessoa ou servidor autorizado baixa a imagem com `docker pull`, sem precisar copiar arquivos manualmente.
+- **Versionamento:** é possível guardar várias versões da mesma imagem usando tags (1.0, 2.0...).
+- **Distribuição e automação:** facilita a implantação em diferentes ambientes e a integração com pipelines de CI/CD.
+- **Imagens prontas:** permite reaproveitar imagens oficiais, como a `node:20-alpine` usada neste projeto.
