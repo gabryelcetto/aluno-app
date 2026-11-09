@@ -1,0 +1,7 @@
+aluno-app
+.node_modules
+.git  
+.env
+.Dockerfile
+.dockerignore
+*.log
